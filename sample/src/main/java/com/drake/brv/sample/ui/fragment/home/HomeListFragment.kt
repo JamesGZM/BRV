@@ -12,6 +12,7 @@ import com.drake.brv.utils.models
 import com.drake.brv.utils.setup
 import com.drake.engine.base.EngineFragment
 import com.drake.net.Get
+import com.drake.net.cache.CacheMode
 import com.drake.net.utils.scope
 import com.drake.statelayout.Status
 import com.drake.tooltip.toast
@@ -64,7 +65,8 @@ class HomeListFragment : EngineFragment<FragmentHomeListBinding>(R.layout.fragme
                         getBinding<ItemHomeBannerBinding>().banner.setDatas(getModel<List<HomeModel.Banner>>())
                     }
                     R.layout.item_home_grid -> {
-                        getBinding<ItemHomeGridBinding>().rvExplore.models = getModel<List<HomeModel.Explore>>()
+                        getBinding<ItemHomeGridBinding>().rvExplore.models =
+                            getModel<List<HomeModel.Explore>>()
                     }
                 }
             }
@@ -83,17 +85,35 @@ class HomeListFragment : EngineFragment<FragmentHomeListBinding>(R.layout.fragme
                 val models: List<Any>
                 val game = Get<GameModel>(Api.GAME) {
                     param("page", index)
+                    setCacheMode(CacheMode.WRITE)
                 }.await()
 
                 // 如果是第一页, 则获取首页数据
                 models = if (index == 1) {
-                    val home = Get<HomeModel>(Api.HOME).await()
+                    val home = Get<HomeModel>(Api.HOME) {
+                        setCacheMode(CacheMode.WRITE)
+                    }.await()
                     home.getAvailableData(game.list)
                 } else { // 否则直接获取游戏列表
                     game.list
                 }
                 addData(models) {
                     index < game.totalPage
+                }
+            }.let {
+                if (index == 1) {
+                    it.preview(true) {
+                        val home = Get<HomeModel>(Api.HOME) {
+                            setCacheMode(CacheMode.READ)
+                        }.await()
+                        binding.rv.models = home.getAvailableData(Get<GameModel>(Api.GAME) {
+                            param("page", index)
+                            setCacheMode(CacheMode.READ)
+                        }.await().list)
+                    }
+
+                    //preview加载缓存之后 用刷新动画 从网络加载数据
+                    autoRefreshAnimationOnly()
                 }
             }
         }.showLoading()

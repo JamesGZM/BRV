@@ -19,13 +19,18 @@ package com.drake.brv.sample.base
 import android.app.Application
 import com.drake.brv.PageRefreshLayout
 import com.drake.brv.sample.BR
+import com.drake.brv.sample.BuildConfig
 import com.drake.brv.sample.R
 import com.drake.brv.sample.component.net.SerializationConverter
 import com.drake.brv.sample.constants.Api
 import com.drake.brv.sample.mock.MockDispatcher
 import com.drake.brv.utils.BRV
 import com.drake.net.NetConfig
+import com.drake.net.interceptor.LogRecordInterceptor
+import com.drake.net.interceptor.RetryInterceptor
 import com.drake.net.okhttp.setConverter
+import com.drake.net.okhttp.setDebug
+import com.drake.net.okhttp.trustSSLCertificate
 import com.drake.statelayout.StateConfig
 import com.scwang.smart.refresh.footer.ClassicsFooter
 import com.scwang.smart.refresh.header.MaterialHeader
@@ -69,6 +74,8 @@ class App : Application() {
         NetConfig.initialize(Api.HOST, this) {
             // 数据转换器
             setConverter(SerializationConverter())
+            setDebug(BuildConfig.DEBUG)
+            addInterceptor(LogRecordInterceptor(BuildConfig.DEBUG))
         }
 
         MockDispatcher.initialize()
