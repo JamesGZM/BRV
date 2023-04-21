@@ -45,6 +45,7 @@ class HomeListFragment : EngineFragment<FragmentHomeListBinding>(R.layout.fragme
                                 toast("点击: 轮播图(${position})")
                             }.setIntercept(false)
                     }
+
                     R.layout.item_home_grid -> {
                         val itemHomeGridBinding = getBinding<ItemHomeGridBinding>()
                         itemHomeGridBinding.tvMoreExplore.setOnClickListener {
@@ -64,6 +65,7 @@ class HomeListFragment : EngineFragment<FragmentHomeListBinding>(R.layout.fragme
                     R.layout.item_home_banner -> {
                         getBinding<ItemHomeBannerBinding>().banner.setDatas(getModel<List<HomeModel.Banner>>())
                     }
+
                     R.layout.item_home_grid -> {
                         getBinding<ItemHomeGridBinding>().rvExplore.models =
                             getModel<List<HomeModel.Explore>>()
@@ -102,7 +104,7 @@ class HomeListFragment : EngineFragment<FragmentHomeListBinding>(R.layout.fragme
                 }
             }.let {
                 if (index == 1) {
-                    it.preview(true) {
+                    it.preview(true, breakLoading = false) {
                         val home = Get<HomeModel>(Api.HOME) {
                             setCacheMode(CacheMode.READ)
                         }.await()
@@ -111,11 +113,11 @@ class HomeListFragment : EngineFragment<FragmentHomeListBinding>(R.layout.fragme
                             setCacheMode(CacheMode.READ)
                         }.await().list)
                     }
-
-                    //preview加载缓存之后 用刷新动画 从网络加载数据
-                    autoRefreshAnimationOnly()
                 }
             }
-        }.showLoading()
+        }.autoRefresh()
+
+        //初始化使用缺省加载页 不回调
+        binding.page.showLoading(refresh = false)
     }
 }
